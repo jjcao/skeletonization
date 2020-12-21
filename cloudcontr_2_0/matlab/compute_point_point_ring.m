@@ -1,6 +1,6 @@
 function ring = compute_point_point_ring(pts, k, index)
-% ·µ»ØµÄringÊÇËùÓÐµãµÄÒ»»·ÃæµÄ¸÷¸ö¶¥µãµÄË÷Òý
-% ¸ÃË÷ÒýÊÇ°´Ë³Ðò´æ´¢µÄ
+% ï¿½ï¿½ï¿½Øµï¿½ringï¿½ï¿½ï¿½ï¿½ï¿½Ðµï¿½ï¿½Ò»ï¿½ï¿½ï¿½ï¿½Ä¸ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+% ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ç°ï¿½Ë³ï¿½ï¿½æ´¢ï¿½ï¿½
 % pts: n*3 matrix for coordinates where we want compute 1-ring.
 % k: k of kNN
 % index: index of kNN
@@ -9,8 +9,7 @@ function ring = compute_point_point_ring(pts, k, index)
 % M.rings = compute_point_point_ring(M.verts, 1, M.k_knn);
 % M.rings = compute_point_point_ring(M.verts, [1:size(M.verts,1)], M.k_knn);
 %
-% NB: too slow, how to speedup?
-% update-date: 2010-5-26
+% update-date: 2020-12-21
 % create-date: 2009-4-23
 % by: deepfish @ DUT, JJCAO
 
@@ -35,13 +34,9 @@ ring = cell(npts,1);
 % I need to flipud each row. Now I'm using the kdtree toolbox under
 % subversion and Matlab 2010a in 64-bit, index(i,1)=i.
 % of 
-if nargin < 3 || isempty(index)
-    kdtree = kdtree_build(pts);% kdtree,ÓÃÀ´ÕÒk½üÁÚ
-    index = zeros(npts, k);
-    for i = 1:npts
-        index(i,:)  = kdtree_k_nearest_neighbors(kdtree,pts(i,:),k)';
-%         index(i,:)  = flipud( kdtree_k_nearest_neighbors(kdtree,pts(i,:),k))';
-    end
+if nargin < 3 || isempty(index)   
+    kdtree = KDTreeSearcher(pts);
+    index = knnsearch(kdtree,pts,'K',k);
 end
 
 % parfor i = 1:npts  
@@ -49,14 +44,14 @@ for i = 1:npts
 %     idx = index(i,:);
 %     nidx = idx(knn_dist(i,:)<radis(i));
 %     if length(nidx) < MIN_NEIGHBOR_NUM
-%          neighbor = pts(index(i,1:MIN_NEIGHBOR_NUM),:); % k½üÁÚ
+%          neighbor = pts(index(i,1:MIN_NEIGHBOR_NUM),:); % kï¿½ï¿½ï¿½ï¿½
 %     else
 %     end
-    neighbor = pts(index(i,:),:); % k½üÁÚ  
-    coefs = princomp(neighbor);    
+    neighbor = pts(index(i,:),:); % kï¿½ï¿½ï¿½ï¿½  
+    coefs = pca(neighbor);    
     x = [neighbor * coefs(:, 1), neighbor * coefs(:, 2)];
     
-    % ÕÒÁÚÓòÊÇ°üº¬Ë÷ÒýÎª1µÄ¶¥µãµÄÒ»»·ÁÚÓò
+    % ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ç°ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Îª1ï¿½Ä¶ï¿½ï¿½ï¿½ï¿½Ò»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
     TRI = delaunayn(x);
     if SHOW_PROGRESS
         figure(1); 
@@ -82,19 +77,19 @@ for i = 1:npts
     temp = sort(temp,2);
     temp = temp(:,2:end);
     
-    % ÕÒÒ»»·µÄµÚÒ»¸ö¶¥µã£ºÈç¹ûÓÐ³öÏÖÒ»´ÎµÄ¶¥µã£¬ÊÓÎªÆðµã£¬·ñÔòÈÎÈ¡Ò»¸ö
+    % ï¿½ï¿½Ò»ï¿½ï¿½ï¿½Äµï¿½Ò»ï¿½ï¿½ï¿½ï¿½ï¿½ã£ºï¿½ï¿½ï¿½ï¿½Ð³ï¿½ï¿½ï¿½Ò»ï¿½ÎµÄ¶ï¿½ï¿½ã£¬ï¿½ï¿½Îªï¿½ï¿½ã£¬ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½È¡Ò»ï¿½ï¿½
     x=temp(:);
     x=sort(x);
     d=diff([x;max(x)+1]);
-    count = diff(find([1;d])); % Ã¿¸öÊý×Ö³öÏÖµÄ´ÎÊý
+    count = diff(find([1;d])); % Ã¿ï¿½ï¿½ï¿½ï¿½ï¿½Ö³ï¿½ï¿½ÖµÄ´ï¿½ï¿½ï¿½
     y =[x(find(d)) count];
     n_sorted_index = size(y,1);
     start = find(count==1);
-    if ~isempty(start) % Èç¹ûÓÐÖ»³öÏÖÒ»´ÎµÄ¶¥µã
+    if ~isempty(start) % ï¿½ï¿½ï¿½ï¿½ï¿½Ö»ï¿½ï¿½ï¿½ï¿½Ò»ï¿½ÎµÄ¶ï¿½ï¿½ï¿½
         want_to_find = y(start(1),1);
     else
         want_to_find = temp(1,1);
-        n_sorted_index = n_sorted_index+1; % Ê×Î»ÊÇ·â±ÕµÄ»·
+        n_sorted_index = n_sorted_index+1; % ï¿½ï¿½Î»ï¿½Ç·ï¿½ÕµÄ»ï¿½
     end
     
     j = 0;    
@@ -116,10 +111,7 @@ for i = 1:npts
     
     neighbor_index = index(i,sorted_index);
     
-    % Ê×Î»Îª¶Ëµã£¬Èç¹ûÁÚÓòÃæÊÇ·â±ÕµÄ£¬ÔòÊ×Î»Êý×ÖÏàÍ¬£¬·ñÔò²»Í¬
+    % ï¿½ï¿½Î»Îªï¿½Ëµã£¬ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ç·ï¿½ÕµÄ£ï¿½ï¿½ï¿½ï¿½ï¿½Î»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Í¬ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Í¬
     ring{i} = neighbor_index;
 end
 
-if exist('kdtree', 'var')
-    kdtree_delete(kdtree);
-end

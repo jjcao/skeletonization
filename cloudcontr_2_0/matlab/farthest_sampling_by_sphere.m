@@ -9,6 +9,8 @@ function [spls, corresp] = farthest_sampling_by_sphere(pts, RADIUS)
 %
 % @author: JJCAO
 % Changed from Andrea Tagliasacchi's code
+%
+% update-date: 2020-12-21
 % @data:   2010-5-7
 % @version 2.0
 
@@ -27,7 +29,7 @@ end
 % pause(5);
 %%--- FURTHEST POINT DOWNSAMPLE THE CLOUD
 tic
-kdtree = kdtree_build( pts );
+kdtree = KDTreeSearcher(pts);   
 spls = zeros( 0, 3 );
 corresp = zeros( length(pts), 1 );
 mindst = nan( length(pts), 1 ); % mindst(i) is the min distance of pts(i) to the sample piont corresp(i) 
@@ -46,19 +48,20 @@ for k=1:length(pts)
         end
 
         % query its delta-neighborhood
-        [nIdxs, nDsts] = kdtree_ball_query( kdtree,pts(maxIdx,:), RADIUS );%original
+        [nIdxs, nDsts] = rangesearch(kdtree, pts(maxIdx,:), RADIUS);
+        
         % if maxIdx and all its neighborhood has been marked, skip ahead
-        if all( corresp(nIdxs) ~= 0 )
+        if all( corresp(nIdxs{:}) ~= 0 )
             mindst(maxIdx) = 0; 
             continue;
-        end;
+        end
 
         % create new node and update (closest) distances
         spls(end+1,:) = pts(maxIdx,:); %#ok<AGROW>
-        for i=1:length(nIdxs)
-            if mindst(nIdxs(i))>nDsts(i) || isnan(mindst(nIdxs(i)))
-               mindst(nIdxs(i)) = nDsts(i);
-               corresp(nIdxs(i)) = size(spls,1);
+        for i=1:length(nIdxs{:})
+            if mindst(nIdxs{:}(i))>nDsts{:}(i) || isnan(mindst(nIdxs{:}(i)))
+               mindst(nIdxs{:}(i)) = nDsts{:}(i);
+               corresp(nIdxs{:}(i)) = size(spls,1);
             end
         end
 
@@ -68,7 +71,6 @@ for k=1:length(pts)
     end
 end
 toc
-kdtree_delete( kdtree );
 
 if SHOW_RESULTS && ~SHOW_SAMPLING_PROGRESS
     plot3( spls(:,1), spls(:,2), spls(:,3), '*g');

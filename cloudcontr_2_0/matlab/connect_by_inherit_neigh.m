@@ -70,15 +70,23 @@ for i=1:size(A,1)
         warning('there are isolate points: %d', i);
     end
 end
-if isempty(isopts)
-    spls_kdtree = kdtree_build( spls );
-    for i=isopts
-        neighs = kdtree_k_nearest_neighbors( spls_kdtree, spls(i,:), 2)';
-        for j = neighs
-            A(i,j) = 1;
-            A(j,i) = 1;
-        end
-    end
-    kdtree_delete( spls_kdtree );
+
+
+if ~isempty(isopts)  
+    spls_kdtree = KDTreeSearcher(spls);  
+%     for i=isopts
+%         %neighs = kdtree_k_nearest_neighbors( spls_kdtree, spls(i,:), 2)';
+%         neighs = knnsearch(spls_kdtree, spls(i,:),'K',2);
+%         for j = neighs
+%             A(i,j) = 1;
+%             A(j,i) = 1;
+%         end
+%     end
+    
+    neighs = knnsearch(spls_kdtree, spls(isopts,:),'K',2);
+    ind = sub2ind(size(A),neighs(:,1),neighs(:,2));
+    A(ind) = 1;
+    ind = sub2ind(size(A),neighs(:,2),neighs(:,1));
+    A(ind) = 1;
 end
 
