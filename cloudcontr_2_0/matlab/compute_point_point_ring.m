@@ -1,6 +1,4 @@
 function ring = compute_point_point_ring(pts, k, index)
-% ���ص�ring�����е��һ����ĸ������������
-% �������ǰ�˳��洢��
 % pts: n*3 matrix for coordinates where we want compute 1-ring.
 % k: k of kNN
 % index: index of kNN
@@ -10,6 +8,9 @@ function ring = compute_point_point_ring(pts, k, index)
 % M.rings = compute_point_point_ring(M.verts, [1:size(M.verts,1)], M.k_knn);
 %
 % update-date: 2020-12-21
+%     The code has been updated for Matlab R2018, R2022a. 
+%     3rd party implementation of kdtree and ball searching have been replaced by two build-in functions: 
+%     knnsearch & rangesearch of Matlab.
 % create-date: 2009-4-23
 % by: deepfish @ DUT, JJCAO
 
@@ -41,17 +42,10 @@ end
 
 % parfor i = 1:npts  
 for i = 1:npts  
-%     idx = index(i,:);
-%     nidx = idx(knn_dist(i,:)<radis(i));
-%     if length(nidx) < MIN_NEIGHBOR_NUM
-%          neighbor = pts(index(i,1:MIN_NEIGHBOR_NUM),:); % k����
-%     else
-%     end
-    neighbor = pts(index(i,:),:); % k����  
+    neighbor = pts(index(i,:),:);
     coefs = pca(neighbor);    
     x = [neighbor * coefs(:, 1), neighbor * coefs(:, 2)];
     
-    % �������ǰ�������Ϊ1�Ķ����һ������
     TRI = delaunayn(x);
     if SHOW_PROGRESS
         figure(1); 
@@ -77,19 +71,18 @@ for i = 1:npts
     temp = sort(temp,2);
     temp = temp(:,2:end);
     
-    % ��һ���ĵ�һ�����㣺����г���һ�εĶ��㣬��Ϊ��㣬������ȡһ��
     x=temp(:);
     x=sort(x);
     d=diff([x;max(x)+1]);
-    count = diff(find([1;d])); % ÿ�����ֳ��ֵĴ���
+    count = diff(find([1;d]));
     y =[x(find(d)) count];
     n_sorted_index = size(y,1);
     start = find(count==1);
-    if ~isempty(start) % �����ֻ����һ�εĶ���
+    if ~isempty(start) 
         want_to_find = y(start(1),1);
     else
         want_to_find = temp(1,1);
-        n_sorted_index = n_sorted_index+1; % ��λ�Ƿ�յĻ�
+        n_sorted_index = n_sorted_index+1; 
     end
     
     j = 0;    
@@ -111,7 +104,6 @@ for i = 1:npts
     
     neighbor_index = index(i,sorted_index);
     
-    % ��λΪ�˵㣬����������Ƿ�յģ�����λ������ͬ������ͬ
     ring{i} = neighbor_index;
 end
 
